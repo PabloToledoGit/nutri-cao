@@ -1,6 +1,9 @@
 const { gerarReceita } = require('../services/gerarPDF');
+const { setCors } = require('../utils/cors');
 
 export default async function handler(req, res) {
+  if (setCors(req, res)) return;
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
   }
