@@ -31,5 +31,4 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Exportar para Vercel
 export default serverless(app);
