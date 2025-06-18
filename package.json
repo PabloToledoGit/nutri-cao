@@ -8,20 +8,25 @@
     "start": "node api/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["nutrify", "backend", "vercel", "mercadopago", "openai"],
+  "keywords": [
+    "nutrify",
+    "backend",
+    "vercel",
+    "mercadopago",
+    "openai"
+  ],
   "author": "Nutrify Team",
   "license": "MIT",
   "description": "Backend para sistema de nutrição personalizada para pets",
   "dependencies": {
     "express": "^4.18.2",
-    "serverless-http": "^3.2.0",
     "mercadopago": "^2.7.0",
-    "openai": "^4.20.1",
     "nodemailer": "^6.9.7",
-    "pdfkit": "^0.14.0"
+    "openai": "^4.20.1",
+    "pdfkit": "^0.14.0",
+    "serverless-http": "^3.2.0"
   },
   "engines": {
     "node": ">=18.0.0"
   }
 }
-
