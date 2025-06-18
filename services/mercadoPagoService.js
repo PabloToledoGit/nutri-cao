@@ -21,15 +21,28 @@ export async function criarPagamento({ email, nome, petNome, formData, valor }) 
     metadata: { petNome, formData }
   };
 
-  const response = await payment.create({ body });
-  const { id, point_of_interaction } = response.body;
+  try {
+    const response = await payment.create({ body });
 
-  return {
-    paymentId: id,
-    qrCode: point_of_interaction.transaction_data.qr_code,
-    qrCodeBase64: point_of_interaction.transaction_data.qr_code_base64
-  };
+    if (!response || !response.body || !response.body.point_of_interaction) {
+      console.error('Resposta inválida da API do MercadoPago:', response);
+      throw new Error('Falha ao criar pagamento no Mercado Pago');
+    }
+
+    const { id, point_of_interaction } = response.body;
+
+    return {
+      paymentId: id,
+      qrCode: point_of_interaction.transaction_data.qr_code,
+      qrCodeBase64: point_of_interaction.transaction_data.qr_code_base64
+    };
+
+  } catch (error) {
+    console.error('Erro ao criar pagamento no Mercado Pago:', error);
+    throw new Error(error.message || 'Erro ao criar pagamento');
+  }
 }
+
 
 // Função para buscar dados do pagamento
 export async function buscarPagamento(paymentId) {
