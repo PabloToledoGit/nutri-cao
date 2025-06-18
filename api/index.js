@@ -13,6 +13,11 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/', (req, res) => {
+  res.status(200).send('API online');
+});
+
+
 app.post('/criar-pagamento', async (req, res) => {
   try {
     const result = await criarPagamento(req.body);
