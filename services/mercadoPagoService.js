@@ -24,12 +24,15 @@ export async function criarPagamento({ email, nome, petNome, formData, valor }) 
   try {
     const response = await payment.create({ body });
 
-    if (!response || !response.body || !response.body.point_of_interaction) {
-      console.error('Resposta inválida da API do MercadoPago:', response);
-      throw new Error('Falha ao criar pagamento no Mercado Pago');
-    }
-
     const { id, point_of_interaction } = response.body;
+
+    if (
+      !point_of_interaction?.transaction_data?.qr_code ||
+      !point_of_interaction?.transaction_data?.qr_code_base64
+    ) {
+      console.error('Dados de QR Code ausentes na resposta do MercadoPago:', response.body);
+      throw new Error('Falha ao obter QR Code do pagamento');
+    }
 
     return {
       paymentId: id,
