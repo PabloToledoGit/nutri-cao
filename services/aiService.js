@@ -22,17 +22,29 @@ const gerarTextoReceita = async (userData) => {
     const nomeDoPlano = planoNome;
 
     const prompt = `
-Você é um especialista em nutrição veterinária.
+Você é um nutricionista veterinário especialista, altamente qualificado, com vasta experiência em nutrição animal, desenvolvimento de planos alimentares e elaboração de rotinas de treino físico e suplementação específica para cães.
 
-Com base nas informações abaixo, **gere um documento COMPLETO no formato HTML, com estilos inline, pronto para exportação em PDF via Puppeteer.**
+🎯 Sua missão:
+Com base nas informações fornecidas, gere um documento completo no formato HTML puro com estilos inline, pronto para exportação via Puppeteer para PDF, com a aparência de uma prescrição nutricional veterinária profissional, estruturada de forma limpa, clara e esteticamente agradável.
 
-❌ NÃO envie explicações, comentários ou qualquer texto fora da tag <html>.  
-❌ NÃO envie texto puro, JSON ou Markdown.  
-✅ Envie apenas HTML válido e funcional, seguindo essa estrutura:
-🚫 Nunca use crases, markdown ou blocos de código. 
-✅ Apenas envie o conteúdo HTML puro, renderizável diretamente no navegador.
+🚫 NUNCA:
 
+Envie explicações, comentários, JSON, Markdown, texto solto, texto fora da tag <html>.
 
+Utilize crases, aspas ou blocos de código.
+
+✅ SEMPRE:
+
+Envie apenas o HTML puro, válido e funcional, renderizável diretamente no navegador.
+
+Garanta que o conteúdo tenha uma abordagem extremamente técnica, clínica e profissional, como se fosse elaborado por um veterinário especializado.
+
+Utilize uma linguagem formal, técnica e objetiva, com descrições nutricionais, cálculos precisos e fundamentação científica, adaptadas à raça, peso, porte, idade e objetivo do animal.
+
+🧠 Estrutura do Documento:
+html
+Copiar
+Editar
 <!DOCTYPE html>
 <html>
 <head>
@@ -40,55 +52,67 @@ Com base nas informações abaixo, **gere um documento COMPLETO no formato HTML,
   <title>Guia Nutricional para ${raca}</title>
 </head>
 <body>
-  ...CONTEÚDO COMPLETO COM ESTILOS INLINE...
+...CONTEÚDO COMPLETO COM ESTILOS INLINE...
 </body>
 </html>
+🔖 Seções Obrigatórias no Documento:
+<h1> Título Principal: "Plano Nutricional Personalizado para ${raca}" </h1>
+<h2> Perfil do Pet e Avaliação Física </h2> - Informações completas do pet (peso, altura, idade, porte, raça, nível de atividade, objetivo e restrições). - Avaliação física incluindo cálculo de IMC canino, condição corporal (magro, ideal, sobrepeso ou obesidade) e recomendação calórica diária detalhada.
+<h2> Rotina de Alimentação Personalizada </h2> - Divisão em refeições (café da manhã, almoço, jantar, snacks). - Quantidades específicas (em gramas) e horários sugeridos. - Cálculo de macros: proteínas, gorduras, carboidratos e fibras por refeição.
+<h2> Receitas Personalizadas (até 2 por refeição) </h2> - Ingredientes balanceados, com quantidades exatas em gramas. - Descrição do modo de preparo. - Tabela nutricional por porção (calorias, proteínas, gorduras, carboidratos, fibras, cálcio, fósforo).
+<h2> Lista de Compras </h2> - Lista completa de ingredientes necessários para 7 dias de plano, com quantidades totais.
+<h2> Vitaminas e Suplementação </h2> - Indicação de suplementos vitamínicos, minerais, ômega 3, probióticos ou condroprotetores, se necessário. - Dosagens específicas baseadas no peso, porte e raça. - Nome do suplemento, quantidade diária (em mg ou ml) e motivo da recomendação (ex.: articulação, imunidade, pele, etc.).
+<h2> Alimentos Proibidos </h2> - Lista clara e objetiva de alimentos tóxicos ou prejudiciais para cães, incluindo breve descrição dos riscos.
+<h2> Plano de Atividades Físicas </h2> - Sugestão de rotina de exercícios físicos adaptada ao porte, idade e objetivo. - Inclua: caminhadas, circuitos, exercícios de enriquecimento ambiental, exercícios mentais e brincadeiras ativas. - Frequência semanal, tempo recomendado e nível de intensidade (leve, moderado ou intenso).
+<h2> Cuidados, Dicas e Bem-Estar </h2> - Recomendações gerais de cuidados com o pet, bem-estar emocional, manejo alimentar, hidratação, higiene, descanso e saúde mental.
+🎨 Estilo Inline Obrigatório:
+<h1> →
+color:#1a237e; font-family:serif; font-size:28px; margin-bottom:20px;
+🔵 (Azul escuro — Título Principal)
 
----
+<h2> →
+color:#1a237e; font-family:serif; font-size:22px; margin-top:30px; margin-bottom:15px;
+🔵 (Azul escuro — Subtítulos)
 
-📑 O conteúdo deve conter as seguintes seções, sempre organizadas por:
+<p> →
+color:#000000; font-family:serif; font-size:18px; line-height:1.6; margin-bottom:15px;
+⚫ (Preto — Texto padrão)
 
-1. <h1> Título Principal </h1>
-2. <h2> Perfil do Pet e Avaliação Física </h2>
-3. <h2> Rotina de Alimentação Personalizada </h2>
-4. <h2> Receitas Personalizadas (até 2 por refeição) </h2>
-5. <h2> Lista de Compras </h2>
-6. <h2> Vitaminas e Suplementação </h2>
-7. <h2> Alimentos Proibidos </h2>
-8. <h2> Plano de Atividades Físicas </h2>
-9. <h2> Cuidados, Dicas e Bem-Estar </h2>
+<ul> <li> →
+color:#000000; font-family:serif; font-size:18px; margin-bottom:10px;
+⚫ (Preto — Listas e itens)
 
----
+🐾 Informações Variáveis do Pet:
+Raça: ${raca}
 
-🎨 Formatação obrigatória (somente inline):
+Gênero: ${genero}
 
-- <h1>: color:#1a237e; font-family:serif; font-size:28px; margin-bottom:20px;
-- <h2>: color:#1a237e; font-family:serif; font-size:22px; margin-top:30px; margin-bottom:15px;
-- <p>: color:#64b5f6; font-family:serif; font-size:18px; line-height:1.6; margin-bottom:15px;
-- <ul> <li>: color:#64b5f6; font-family:serif; font-size:18px; margin-bottom:10px;
+Idade: ${idade} anos
 
----
+Peso: ${peso} kg
 
-**INFORMAÇÕES DO PET:**  
+Altura: ${altura} cm
 
-Raça: ${raca}  
-Gênero: ${genero}  
-Idade: ${idade} anos  
-Peso: ${peso} kg  
-Altura: ${altura} cm  
-Porte: ${porte}  
-Atividade: ${atividade}  
-Objetivo: ${objetivo}  
-Calorias recomendadas: ${calorias} kcal/dia  
-Restrições: ${restricoes || "Nenhuma"}  
-Plano: ${nomeDoPlano}  
+Porte: ${porte}
 
-🚨 GERE TODO O CONTEÚDO COMPLETO, SEM OMITIR NADA.  
-🚫 NUNCA ENVIE APENAS O TEXTO, ENVIE O DOCUMENTO HTML INTEIRO.
+Atividade: ${atividade}
 
----  
+Objetivo: ${objetivo}
 
-💡 Envie agora SOMENTE o HTML, começando com <!DOCTYPE html>.
+Calorias recomendadas: ${calorias} kcal/dia
+
+Restrições: ${restricoes || "Nenhuma"}
+
+Plano: ${nomeDoPlano}
+
+🚨 Importante:
+
+🔥 Gere absolutamente TODO o conteúdo, sem omitir nenhuma seção.
+
+🔥 NUNCA envie texto puro, JSON, Markdown ou fora da tag <html>.
+
+💥 Resultado:
+Um documento HTML clínico, ultra profissional, com cara de prescrição nutricional veterinária, pronto para conversão imediata em PDF.
 `;
 
     try {
