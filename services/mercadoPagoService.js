@@ -1,13 +1,13 @@
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
-// Inicializa o client com token (SDK V2)
+// Inicializa o MercadoPago SDK (v2)
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN,
   options: { timeout: 5000 }
 });
-
 const payment = new Payment(client);
 
+// Função para criar pagamento MercadoPago
 export async function criarPagamento({ email, nome, petNome, formData, valor }) {
   if (!email || !nome || !petNome || !formData || !valor) {
     throw new Error('Dados insuficientes');
@@ -18,7 +18,7 @@ export async function criarPagamento({ email, nome, petNome, formData, valor }) 
     payment_method_id: 'pix',
     description: `Nutrição para ${petNome}`,
     payer: { email, first_name: nome },
-    metadata: { petNome, ...formData }
+    metadata: { petNome, formData }
   };
 
   const response = await payment.create({ body });
@@ -30,3 +30,15 @@ export async function criarPagamento({ email, nome, petNome, formData, valor }) 
     qrCodeBase64: point_of_interaction.transaction_data.qr_code_base64
   };
 }
+
+// Função para buscar dados do pagamento
+export async function buscarPagamento(paymentId) {
+  try {
+    const response = await payment.get({ id: paymentId });
+    return response.body;
+  } catch (error) {
+    console.error('Erro ao buscar pagamento:', error);
+    throw new Error('Falha ao buscar dados do pagamento');
+  }
+}
+

@@ -1,27 +1,27 @@
 {
-  "name": "backend",
+  "name": "nutrify-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
+  "main": "api/index.js",
   "scripts": {
+    "dev": "node api/index.js",
+    "start": "node api/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": ["nutrify", "backend", "vercel", "mercadopago", "openai"],
+  "author": "Nutrify Team",
+  "license": "MIT",
+  "description": "Backend para sistema de nutrição personalizada para pets",
   "dependencies": {
-    "@sparticuz/chromium": "^137.0.1",
-    "axios": "^1.9.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
-    "epub-gen": "^0.1.0",
-    "express": "^5.1.0",
-    "firebase-admin": "^13.4.0",
+    "express": "^4.18.2",
+    "serverless-http": "^3.2.0",
     "mercadopago": "^2.7.0",
-    "node": "^22.16.0",
-    "nodemailer": "^7.0.3",
-    "openai": "^5.1.1",
-    "pdfkit": "^0.17.1",
-    "puppeteer-core": "^24.10.1",
-    "serverless-http": "^3.2.0"
+    "openai": "^4.20.1",
+    "nodemailer": "^6.9.7",
+    "pdfkit": "^0.14.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
+

@@ -1,27 +1,29 @@
-const { OpenAI } = require("openai");
+import OpenAI from 'openai';
 
+// Inicializa OpenAI
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY
 });
 
-const gerarTextoReceita = async (userData) => {
-    const {
-        raca,
-        peso,
-        altura,
-        idade,
-        porte,
-        atividade,
-        objetivo,
-        calorias,
-        restricoes,
-        genero,
-        planoNome
-    } = userData;
+// Função para gerar receita personalizada para pet com OpenAI
+export const gerarTextoReceita = async (userData) => {
+  const {
+    raca,
+    peso,
+    altura,
+    idade,
+    porte,
+    atividade,
+    objetivo,
+    calorias,
+    restricoes,
+    genero,
+    planoNome
+  } = userData;
 
-    const nomeDoPlano = planoNome;
+  const nomeDoPlano = planoNome;
 
-    const prompt = `
+  const prompt = `
 Você é um nutricionista veterinário especialista, altamente qualificado, com vasta experiência em nutrição animal, desenvolvimento de planos alimentares e elaboração de rotinas de treino físico e suplementação específica para cães.
 
 🎯 Sua missão:
@@ -115,25 +117,24 @@ Plano: ${nomeDoPlano}
 Um documento HTML clínico, ultra profissional, com cara de prescrição nutricional veterinária, pronto para conversão imediata em PDF.
 `;
 
-    try {
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [{ role: "user", content: prompt }],
-            temperature: 0.7,
-        });
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+    });
 
-        const resposta = completion.choices?.[0]?.message?.content;
+    const resposta = completion.choices?.[0]?.message?.content;
 
-        if (!resposta) {
-            console.error("Resposta vazia da OpenAI", completion);
-            throw new Error("Erro: Resposta vazia da OpenAI.");
-        }
-
-        return resposta;
-    } catch (error) {
-        console.error("Erro na geração de receita:", error);
-        throw new Error(`Erro na geração da receita: ${error.message}`);
+    if (!resposta) {
+      console.error("Resposta vazia da OpenAI", completion);
+      throw new Error("Erro: Resposta vazia da OpenAI.");
     }
+
+    return resposta;
+  } catch (error) {
+    console.error("Erro na geração de receita:", error);
+    throw new Error(`Erro na geração da receita: ${error.message}`);
+  }
 };
 
-module.exports = { gerarTextoReceita };

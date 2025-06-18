@@ -1,7 +1,7 @@
-// utils/cors.js
-export function setCors(req, res) {
+// Middleware CORS simples e tratamento do OPTIONS
+export const setCors = (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', '*'); // no futuro, troca pelo domínio do frontend
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -13,4 +13,5 @@ export function setCors(req, res) {
     return true;
   }
   return false;
-}
+};
+

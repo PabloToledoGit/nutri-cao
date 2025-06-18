@@ -1,56 +1,7 @@
-// Arquivo: /api/services/gerarPDF.js
-const puppeteer = require('puppeteer-core');
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
-// Nota: Removemos o await import aqui e movemos para dentro da função gerarPDF
-// pois top-level await não é suportado em CommonJS
-
-const gerarPDF = async (titulo, htmlContentCompleto) => {
-  let browser = null;
-  console.log("Iniciando a geração do PDF...");
-
-  try {
-    // Importação do chromium movida para dentro da função
-    const chromium = await import('@sparticuz/chromium');
-    
-    const executablePath = await chromium.default.executablePath();
-    browser = await puppeteer.launch({
-      args: chromium.default.args,
-      defaultViewport: chromium.default.defaultViewport,
-      executablePath: executablePath,
-      headless: chromium.default.headless,
-      ignoreHTTPSErrors: true,
-    });
-
-    const page = await browser.newPage();
-    await page.setContent(htmlContentCompleto, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '25mm', right: '20mm', bottom: '25mm', left: '20mm' }
-    });
-
-    console.log("Buffer do PDF gerado com sucesso.");
-    return pdfBuffer;
-
-  } catch (error) {
-    console.error('Erro detalhado ao gerar PDF:', error);
-    throw new Error(`Erro na geração do PDF: ${error.message}`);
-  } finally {
-    if (browser !== null) {
-      await browser.close();
-    }
-  }
-};
-
-/**
- * Envia um e-mail com o PDF gerado como anexo.
- * @param {string} emailDestinatario - O e-mail do destinatário.
- * @param {string} tituloReceita - O título da receita para o assunto e nome do ficheiro.
- * @param {Buffer} pdfBuffer - O PDF em formato buffer.
- * @returns {Promise<boolean>} Verdadeiro se o e-mail foi enviado com sucesso.
- */
-const enviarEmailComPDF = async (emailDestinatario, tituloReceita, pdfBuffer) => {
+// Função para enviar e-mail com PDF
+export const enviarEmailComPDF = async (emailDestinatario, tituloReceita, pdfBuffer) => {
   if (!emailDestinatario || !pdfBuffer) {
     throw new Error("Email e buffer do PDF são obrigatórios.");
   }
@@ -88,11 +39,11 @@ const enviarEmailComPDF = async (emailDestinatario, tituloReceita, pdfBuffer) =>
       throw new Error(`Falha na conexão SMTP: ${verifyError.message}`);
     }
 
-const mailOptions = {
-  from: '"NutriCão - Nutrição Veterinária Personalizada" <nutrify@nutrifyservice.com>',
-  to: emailDestinatario,
-  subject: `🐶 NutriCão | Receita Nutricional de ${tituloReceita}`,
-  html: `
+    const mailOptions = {
+      from: '"NutriCão - Nutrição Veterinária Personalizada" <nutrify@nutrifyservice.com>',
+      to: emailDestinatario,
+      subject: `🐶 NutriCão | Receita Nutricional de ${tituloReceita}`,
+      html: `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #FF7D33; padding: 20px; text-align: center; border-radius: 5px 5px 0 0;">
         <h1 style="color: white; margin: 0;">NutriCão</h1>
@@ -127,24 +78,24 @@ const mailOptions = {
       </div>
     </div>
   `,
-  attachments: [
-    {
-      filename: `Receita_Nutricional_${tituloReceita.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_')}.pdf`,
-      content: pdfBuffer,
-      contentType: 'application/pdf'
-    }
-  ]
-};
+      attachments: [
+        {
+          filename: `Receita_Nutricional_${tituloReceita.replace(/[^\w\s]/gi, '').replace(/\s+/g, '_')}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }
+      ]
+    };
 
     console.log('Enviando e-mail...');
     const info = await transporter.sendMail(mailOptions);
     console.log(`E-mail enviado com sucesso para ${emailDestinatario}. ID: ${info.messageId}`);
-    
+
     return true;
 
   } catch (error) {
     console.error(`Erro detalhado ao enviar e-mail para ${emailDestinatario}:`, error);
-    
+
     // Mensagens de erro mais específicas
     let errorMessage = 'Erro ao enviar o e-mail da receita.';
     if (error.code === 'EAUTH') {
@@ -152,9 +103,8 @@ const mailOptions = {
     } else if (error.code === 'ECONNECTION') {
       errorMessage = 'Não foi possível conectar ao servidor SMTP. Verifique sua conexão de internet.';
     }
-    
+
     throw new Error(`${errorMessage} Detalhes: ${error.message}`);
   }
 };
 
-module.exports = { gerarPDF, enviarEmailComPDF };
