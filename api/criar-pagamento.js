@@ -8,10 +8,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Método não permitido' });
   }
 
+  const { email, nome, petNome, formData, valor } = req.body;
+
+  console.log('[DEBUG] Dados recebidos na API:', { email, nome, petNome, formData, valor });
+
+  if (!email || !nome || !petNome || !formData || !valor) {
+    return res.status(400).json({ error: 'Dados insuficientes para criar pagamento' });
+  }
+
   try {
-    const result = await criarPagamento(req.body);
+    const result = await criarPagamento({ email, nome, petNome, formData, valor });
     return res.status(200).json(result);
   } catch (err) {
+    console.error('[API] Erro na criação de pagamento:', err);
     return res.status(500).json({ error: err.message });
   }
 }

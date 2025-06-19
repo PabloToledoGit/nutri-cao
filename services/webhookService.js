@@ -1,33 +1,133 @@
 import { gerarTextoReceita } from '../services/aiService.js';
 import { enviarEmailComPDF } from '../services/emailService.js';
-import { buscarPagamento } from '../services/mercadoPagoService.js';
+import { buscarPagamento, buscarViaMerchantOrder } from '../services/mercadoPagoService.js';
+import { gerarPDF } from './geraPDF.js'; 
+import { gerarHTMLReceita } from './gerarHTML.js'; 
 
-// Função para processar webhook de pagamento confirmado
+const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+// 🚀 Função para processar webhook
 export async function processarWebhookPagamento(paymentData) {
   try {
-    const { id, status, metadata } = paymentData;
+    const { id: notificationId, type, data } = paymentData;
+
+    console.log(`[Webhook] Notificação recebida. Tipo: ${type}, ID da notificação: ${notificationId}`);
+
+    if (type !== 'payment') {
+      console.log(`[Webhook] Tipo de evento não tratado: ${type}`);
+      return;
+    }
+
+    const paymentId = data?.id;
+    if (!paymentId) {
+      console.error('[Webhook] ID do pagamento ausente na notificação.');
+      return;
+    }
+
+    console.log(`[Webhook] Buscando dados do pagamento. ID do pagamento: ${paymentId}`);
+
+    let pagamento = null;
+    const tentativas = 5;
+
+    for (let i = 0; i < tentativas; i++) {
+      try {
+        pagamento = await buscarPagamento(paymentId);
+        if (pagamento) break;
+      } catch (error) {
+        console.warn(`[Webhook] Tentativa ${i + 1} falhou ao buscar pagamento. Erro: ${error.message}`);
+        await delay(2000 * (i + 1));
+      }
+    }
+
+    if (!pagamento) {
+      console.warn(`[Webhook] Tentativas diretas falharam. Buscando via Merchant Order...`);
+      pagamento = await buscarViaMerchantOrder(paymentId);
+    }
+
+    if (!pagamento) {
+      console.error(`[Webhook] Pagamento com ID ${paymentId} não encontrado após todas as tentativas.`);
+      return;
+    }
+
+    const { id, status, metadata } = pagamento;
 
     if (status === 'approved') {
-      console.log(`Pagamento ${id} aprovado. Iniciando geração de receita...`);
+      console.log(`[Webhook] Pagamento ${id} aprovado. Iniciando geração de receita...`);
 
-      // Extrair dados do pet dos metadados
-      const { petNome, formData } = metadata;
-      const dadosPet = JSON.parse(formData);
+      if (!metadata) {
+        console.error(`[Webhook] Metadata ausente no pagamento ${id}.`);
+        return;
+      }
 
-      // Gerar receita com OpenAI
+      console.log(`[Webhook] Metadata recebida:`, metadata);
+
+      const petNome = metadata.petNome || metadata.pet_nome;
+      const formData = metadata.formData || metadata.form_data;
+      const valor = metadata.valor;
+
+      const rawEmailMeta = metadata.email;
+      const rawEmailPayer = pagamento.payer?.email;
+      const email = rawEmailMeta || rawEmailPayer;
+
+      console.log(`[Webhook] E-mail identificado. metadata.email: ${rawEmailMeta}, payer.email: ${rawEmailPayer}, usado: ${email}`);
+
+      const camposFaltando = [];
+      if (!petNome) camposFaltando.push('petNome');
+      if (!formData) camposFaltando.push('formData');
+      if (!email) camposFaltando.push('email');
+
+      if (camposFaltando.length > 0) {
+        console.error(`[Webhook] Metadata incompleta no pagamento ${id}. Campos ausentes: ${camposFaltando.join(', ')}`);
+        return;
+      }
+
+      let dadosPet = {};
+      try {
+        dadosPet = JSON.parse(Buffer.from(formData, 'base64').toString('utf8'));
+      } catch (error) {
+        console.error('[Webhook] Erro ao parsear formData:', error);
+        return;
+      }
+
+      console.log('[Webhook] Dados do Pet recebidos:', dadosPet);
+
+      // 🔥 Gerar receita com IA
+      console.log('[Webhook] Gerando receita...');
       const receita = await gerarTextoReceita(dadosPet);
 
-      // Simular geração de PDF (aqui você implementaria a geração real)
-      const pdfBuffer = Buffer.from(receita, 'utf8'); // Placeholder
+      console.log('[Webhook] Receita gerada com sucesso.');
 
-      // Enviar por e-mail
-      await enviarEmailComPDF(dadosPet.email, petNome, pdfBuffer);
+      // 🔥 Gerar HTML bonitão
+      const htmlReceita = gerarHTMLReceita(petNome, receita);
 
-      console.log(`Processo completo para pagamento ${id}`);
+      // 🔥 Gerar PDF real
+      let pdfBuffer;
+      try {
+        console.log('[Webhook] Gerando PDF real...');
+        pdfBuffer = await gerarPDF(petNome, htmlReceita);
+        console.log('[Webhook] PDF gerado com sucesso.');
+      } catch (pdfError) {
+        console.error('[Webhook] Erro ao gerar PDF:', pdfError);
+        return;
+      }
+
+      // 🔥 Enviar PDF por e-mail
+      try {
+        console.log('[Webhook] Enviando e-mail com PDF...');
+        await enviarEmailComPDF(email, petNome, pdfBuffer);
+        console.log(`[Webhook] E-mail enviado com sucesso para ${email}`);
+      } catch (emailError) {
+        console.error(`[Webhook] Erro ao enviar e-mail para ${email}:`, emailError);
+        return;
+      }
+
+      console.log(`[Webhook] Processo concluído com sucesso para pagamento ${id}`);
+    } else {
+      console.log(`[Webhook] Pagamento ${id} com status ${status}. Ignorado.`);
     }
+
   } catch (error) {
-    console.error('Erro ao processar webhook:', error);
+    console.error('[Webhook] Erro fatal ao processar webhook:', error);
     throw error;
   }
 }
-
