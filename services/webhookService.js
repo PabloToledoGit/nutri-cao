@@ -6,7 +6,6 @@ import { gerarHTMLReceita } from './gerarHTML.js';
 
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
-// 🚀 Função para processar webhook
 export async function processarWebhookPagamento(paymentData) {
   try {
     const { id: notificationId, type, data } = paymentData;
@@ -52,24 +51,42 @@ export async function processarWebhookPagamento(paymentData) {
     const { id, status, metadata } = pagamento;
 
     if (status === 'approved') {
-      console.log(`[Webhook] Pagamento ${id} aprovado. Iniciando geração de receita...`);
-
       if (!metadata) {
         console.error(`[Webhook] Metadata ausente no pagamento ${id}.`);
         return;
       }
 
-      console.log(`[Webhook] Metadata recebida:`, metadata);
+      // ✅ Verificação de valor pago
+      const valoresEsperados = {
+        vitalidade: 14.90,
+        controlePeso: 9.99,
+        emagrecimento: 12.90,
+      };
+
+      const tipoReceita = metadata.tipoReceita || metadata.tipo_receita;
+      const valorEsperado = valoresEsperados[tipoReceita];
+
+      if (!valorEsperado) {
+        console.error(`[Webhook] Tipo de receita inválido ou não definido: ${tipoReceita}`);
+        return;
+      }
+
+      const arredondar = (num) => Math.round(num * 100) / 100;
+      const valorPago = Number(pagamento.transaction_amount);
+
+      if (arredondar(valorPago) !== arredondar(valorEsperado)) {
+        console.error(`[Webhook] Valor pago (${valorPago}) não corresponde ao valor esperado (${valorEsperado}) para a receita "${tipoReceita}".`);
+        return;
+      }
+
+      console.log(`[Webhook] Valor validado com sucesso: R$ ${valorPago} corresponde ao tipo "${tipoReceita}"`);
+      console.log(`[Webhook] Pagamento ${id} aprovado. Iniciando geração de receita...`);
 
       const petNome = metadata.petNome || metadata.pet_nome;
       const formData = metadata.formData || metadata.form_data;
-      const valor = metadata.valor;
-
       const rawEmailMeta = metadata.email;
       const rawEmailPayer = pagamento.payer?.email;
       const email = rawEmailMeta || rawEmailPayer;
-
-      console.log(`[Webhook] E-mail identificado. metadata.email: ${rawEmailMeta}, payer.email: ${rawEmailPayer}, usado: ${email}`);
 
       const camposFaltando = [];
       if (!petNome) camposFaltando.push('petNome');
@@ -94,7 +111,6 @@ export async function processarWebhookPagamento(paymentData) {
       // 🔥 Gerar receita com IA
       console.log('[Webhook] Gerando receita...');
       const receita = await gerarTextoReceita(dadosPet);
-
       console.log('[Webhook] Receita gerada com sucesso.');
 
       // 🔥 Gerar HTML bonitão
