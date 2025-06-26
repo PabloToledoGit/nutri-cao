@@ -8,8 +8,9 @@ const client = new MercadoPagoConfig({
 const payment = new Payment(client);
 const merchantOrder = new MerchantOrder(client);
 
-export async function criarPagamento({ email, nome, sobrenome, petNome, formData, valor }) {
-  if (!email || !nome || !sobrenome || !petNome || !formData || !valor) {
+// 👇 AGORA com tipoReceita incluído!
+export async function criarPagamento({ email, nome, sobrenome = '', petNome, formData, valor, tipoReceita }) {
+  if (!email || !nome || !petNome || !formData || !valor || !tipoReceita) {
     throw new Error('Dados insuficientes para criar pagamento');
   }
 
@@ -17,7 +18,8 @@ export async function criarPagamento({ email, nome, sobrenome, petNome, formData
     petNome,
     formData: Buffer.from(JSON.stringify(formData)).toString('base64'),
     email,
-    valor
+    valor,
+    tipoReceita
   };
 
   const body = {
@@ -36,7 +38,7 @@ export async function criarPagamento({ email, nome, sobrenome, petNome, formData
           id: 'nutricapet001',
           title: `Nutrição Inteligente - ${petNome}`,
           description: `Plano alimentar desenvolvido para ${petNome}`,
-          category_id: 'services', // Use 'services' ou outra categoria válida
+          category_id: 'services',
           quantity: 1,
           unit_price: Number(valor)
         }

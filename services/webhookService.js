@@ -56,7 +56,6 @@ export async function processarWebhookPagamento(paymentData) {
         return;
       }
 
-      // ✅ Verificação de valor pago
       const valoresEsperados = {
         vitalidade: 14.90,
         controlePeso: 9.99,
