@@ -8,7 +8,7 @@ const client = new MercadoPagoConfig({
 const payment = new Payment(client);
 const merchantOrder = new MerchantOrder(client);
 
-// 👇 AGORA com tipoReceita incluído!
+// ✅ Função principal de criação de pagamento PIX
 export async function criarPagamento({ email, nome, sobrenome = '', petNome, formData, valor, tipoReceita }) {
   if (!email || !nome || !petNome || !formData || !valor || !tipoReceita) {
     throw new Error('Dados insuficientes para criar pagamento');
@@ -72,5 +72,29 @@ export async function criarPagamento({ email, nome, sobrenome = '', petNome, for
   } catch (error) {
     console.error('[Pagamento] Erro ao criar pagamento no Mercado Pago:', error);
     throw new Error(error.message || 'Erro ao criar pagamento no Mercado Pago');
+  }
+}
+
+// ✅ NOVAS FUNÇÕES USADAS PELO WEBHOOK
+
+// Busca direta pelo ID do pagamento
+export async function buscarPagamento(paymentId) {
+  try {
+    const result = await payment.get({ id: paymentId });
+    return result;
+  } catch (err) {
+    console.error(`[MP] Erro ao buscar pagamento direto por ID ${paymentId}:`, err.message);
+    return null;
+  }
+}
+
+// Busca via Merchant Order caso a direta falhe
+export async function buscarViaMerchantOrder(paymentId) {
+  try {
+    const result = await merchantOrder.search({ qs: { external_reference: paymentId } });
+    return result?.results?.[0]?.payments?.[0] || null;
+  } catch (err) {
+    console.error(`[MP] Erro ao buscar pagamento via Merchant Order para ID ${paymentId}:`, err.message);
+    return null;
   }
 }
