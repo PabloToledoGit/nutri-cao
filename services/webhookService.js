@@ -55,7 +55,7 @@ export async function processarWebhookPagamento(paymentData) {
     }
 
     const valoresEsperados = {
-      vitalidade: 14.9,
+      vitalidade: 18.9,
       controlePeso: 9.99,
       emagrecimento: 12.9,
     };
