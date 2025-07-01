@@ -57,7 +57,7 @@ export async function processarWebhookPagamento(paymentData) {
     const valoresEsperados = {
       vitalidade: 18.9,
       controlePeso: 9.99,
-      emagrecimento: 12.9,
+      emagrecimento: 14.9,
     };
 
     const tipoReceita = metadata.tipoReceita || metadata.tipo_receita;
