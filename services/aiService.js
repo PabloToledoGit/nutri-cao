@@ -18,7 +18,8 @@ export const gerarTextoReceita = async (userData) => {
     calorias,
     restricoes,
     genero,
-    planoNome
+    planoNome,
+    incluiComandosBasicos = false // default para falso
   } = userData;
 
   const nomeDoPlano = planoNome;
@@ -44,9 +45,6 @@ Garanta que o conteúdo tenha uma abordagem extremamente técnica, clínica e pr
 Utilize uma linguagem formal, técnica e objetiva, com descrições nutricionais, cálculos precisos e fundamentação científica, adaptadas à raça, peso, porte, idade e objetivo do animal.
 
 🧠 Estrutura do Documento:
-html
-Copiar
-Editar
 <!DOCTYPE html>
 <html>
 <head>
@@ -54,58 +52,51 @@ Editar
   <title>Guia Nutricional para ${raca}</title>
 </head>
 <body>
-...CONTEÚDO COMPLETO COM ESTILOS INLINE...
+
+<h1 style="color:#1a237e; font-family:serif; font-size:28px; margin-bottom:20px;">Plano Nutricional Personalizado para ${raca}</h1>
+
+<!-- Seção de perfil -->
+<h2 style="color:#1a237e; font-family:serif; font-size:22px; margin-top:30px; margin-bottom:15px;">Perfil do Pet e Avaliação Física</h2>
+<!-- ... conteúdo completo ... -->
+
+<!-- Outras seções obrigatórias -->
+
+${incluiComandosBasicos ? `
+<!-- Seção extra se order bump for ativado -->
+<h2 style="color:#1a237e; font-family:serif; font-size:22px; margin-top:30px; margin-bottom:15px;">Plano de Comandos Básicos (7 Dias)</h2>
+<p style="color:#000000; font-family:serif; font-size:18px; line-height:1.6; margin-bottom:15px;">
+Este plano complementar tem como objetivo introduzir comandos básicos de obediência para ${raca}, melhorando sua disciplina, comunicação com o tutor e bem-estar comportamental. A prática deve ser feita diariamente por 15 a 20 minutos.
+</p>
+<ul style="color:#000000; font-family:serif; font-size:18px; margin-bottom:10px;">
+  <li><strong>Dia 1:</strong> Sentar – Use petiscos para incentivar e recompensar a posição correta.</li>
+  <li><strong>Dia 2:</strong> Deitar – Após dominar o “sentar”, ensine a deitar com reforço positivo.</li>
+  <li><strong>Dia 3:</strong> Ficar – Ensine o cão a manter a posição enquanto se afasta lentamente.</li>
+  <li><strong>Dia 4:</strong> Vir quando chamado – Pratique com distâncias curtas e recompensas.</li>
+  <li><strong>Dia 5:</strong> Dar a pata – Associar a ordem à recompensa, promovendo atenção.</li>
+  <li><strong>Dia 6:</strong> Combinar dois comandos – Ex.: “Sentar” + “Ficar”.</li>
+  <li><strong>Dia 7:</strong> Reforço geral + prática com distrações leves (sons, outros ambientes).</li>
+</ul>
+<p style="color:#000000; font-family:serif; font-size:18px; line-height:1.6; margin-bottom:15px;">
+Dica: mantenha o tom de voz firme, use recompensas imediatas e finalize os treinos com brincadeiras para associar positivamente.
+</p>
+` : ''}
+
 </body>
 </html>
-🔖 Seções Obrigatórias no Documento:
-<h1> Título Principal: "Plano Nutricional Personalizado para ${raca}" </h1>
-<h2> Perfil do Pet e Avaliação Física </h2> - Informações completas do pet (peso, altura, idade, porte, raça, nível de atividade, objetivo e restrições). - Avaliação física incluindo cálculo de IMC canino, condição corporal (magro, ideal, sobrepeso ou obesidade) e recomendação calórica diária detalhada.
-<h2> Rotina de Alimentação Personalizada </h2> - Divisão em refeições (café da manhã, almoço, jantar, snacks). - Quantidades específicas (em gramas) e horários sugeridos. - Cálculo de macros: proteínas, gorduras, carboidratos e fibras por refeição.
-<h2> Receitas Personalizadas (até 2 por refeição) </h2> - Ingredientes balanceados, com quantidades exatas em gramas. - Descrição do modo de preparo. - Tabela nutricional por porção (calorias, proteínas, gorduras, carboidratos, fibras, cálcio, fósforo).
-<h2> Lista de Compras </h2> - Lista completa de ingredientes necessários para 7 dias de plano, com quantidades totais.
-<h2> Vitaminas e Suplementação </h2> - Indicação de suplementos vitamínicos, minerais, ômega 3, probióticos ou condroprotetores, se necessário. - Dosagens específicas baseadas no peso, porte e raça. - Nome do suplemento, quantidade diária (em mg ou ml) e motivo da recomendação (ex.: articulação, imunidade, pele, etc.).
-<h2> Alimentos Proibidos </h2> - Lista clara e objetiva de alimentos tóxicos ou prejudiciais para cães, incluindo breve descrição dos riscos.
-<h2> Plano de Atividades Físicas </h2> - Sugestão de rotina de exercícios físicos adaptada ao porte, idade e objetivo. - Inclua: caminhadas, circuitos, exercícios de enriquecimento ambiental, exercícios mentais e brincadeiras ativas. - Frequência semanal, tempo recomendado e nível de intensidade (leve, moderado ou intenso).
-<h2> Cuidados, Dicas e Bem-Estar </h2> - Recomendações gerais de cuidados com o pet, bem-estar emocional, manejo alimentar, hidratação, higiene, descanso e saúde mental.
-🎨 Estilo Inline Obrigatório:
-<h1> →
-color:#1a237e; font-family:serif; font-size:28px; margin-bottom:20px;
-🔵 (Azul escuro — Título Principal)
-
-<h2> →
-color:#1a237e; font-family:serif; font-size:22px; margin-top:30px; margin-bottom:15px;
-🔵 (Azul escuro — Subtítulos)
-
-<p> →
-color:#000000; font-family:serif; font-size:18px; line-height:1.6; margin-bottom:15px;
-⚫ (Preto — Texto padrão)
-
-<ul> <li> →
-color:#000000; font-family:serif; font-size:18px; margin-bottom:10px;
-⚫ (Preto — Listas e itens)
 
 🐾 Informações Variáveis do Pet:
 Raça: ${raca}
-
 Gênero: ${genero}
-
 Idade: ${idade} anos
-
 Peso: ${peso} kg
-
 Altura: ${altura} cm
-
 Porte: ${porte}
-
 Atividade: ${atividade}
-
 Objetivo: ${objetivo}
-
 Calorias recomendadas: ${calorias} kcal/dia
-
 Restrições: ${restricoes || "Nenhuma"}
-
 Plano: ${nomeDoPlano}
+Inclui Comandos Básicos: ${incluiComandosBasicos ? "Sim" : "Não"}
 
 🚨 Importante:
 
@@ -137,4 +128,5 @@ Um documento HTML clínico, ultra profissional, com cara de prescrição nutrici
     throw new Error(`Erro na geração da receita: ${error.message}`);
   }
 };
+
 

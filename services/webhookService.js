@@ -10,71 +10,72 @@ const arredondar = (num) => Math.round(Number(num) * 100) / 100;
 export async function processarWebhookPagamento(paymentData) {
   try {
     const { id: notificationId, type, data } = paymentData;
-
-    console.log(`[Webhook] Notificação recebida. Tipo: ${type}, ID da notificação: ${notificationId}`);
+    console.log(`[Webhook] Notificação recebida. Tipo: ${type}, ID: ${notificationId}`);
 
     if (type !== 'payment') {
-      console.log(`[Webhook] Tipo de evento não tratado: ${type}`);
+      console.log(`[Webhook] Tipo não tratado: ${type}`);
       return;
     }
 
     const paymentId = data?.id;
     if (!paymentId) {
-      console.error('[Webhook] ID do pagamento ausente na notificação.');
+      console.error('[Webhook] ID do pagamento ausente.');
       return;
     }
 
+    // Tentativa com retries
     let pagamento = null;
     const tentativas = 5;
-
     for (let i = 0; i < tentativas; i++) {
       try {
         pagamento = await buscarPagamento(paymentId);
         if (pagamento) break;
       } catch (error) {
-        console.warn(`[Webhook] Tentativa ${i + 1} falhou ao buscar pagamento: ${error.message}`);
+        console.warn(`[Tentativa ${i + 1}] Erro ao buscar pagamento: ${error.message}`);
         await delay(2000 * (i + 1));
       }
     }
 
     if (!pagamento) {
-      console.warn('[Webhook] Tentativas diretas falharam. Buscando via Merchant Order...');
+      console.warn('[Webhook] Buscando via Merchant Order...');
       pagamento = await buscarViaMerchantOrder(paymentId);
     }
 
     if (!pagamento) {
-      console.error(`[Webhook] Pagamento com ID ${paymentId} não encontrado após todas as tentativas.`);
+      console.error(`[Webhook] Pagamento ${paymentId} não encontrado.`);
       return;
     }
 
     const { id, status, metadata = {}, transaction_amount, payer = {} } = pagamento;
-
     if ((status || '').toLowerCase() !== 'approved') {
       console.log(`[Webhook] Pagamento ${id} com status "${status}". Ignorado.`);
       return;
     }
 
-    const valoresEsperados = {
+    const tipoReceita = metadata.tipoReceita || metadata.tipo_receita;
+    const incluiComandosBasicos = metadata.incluiComandosBasicos === true || metadata.incluiComandosBasicos === 'true';
+
+    const valoresBase = {
       vitalidade: 18.9,
       controlePeso: 9.99,
-      emagrecimento: 14.9,
+      emagrecimento: 12.9,
     };
 
-    const tipoReceita = metadata.tipoReceita || metadata.tipo_receita;
-    const valorEsperado = valoresEsperados[tipoReceita];
+    const valorBase = valoresBase[tipoReceita];
+    const valorEsperado = arredondar(valorBase + (incluiComandosBasicos ? 7.9 : 0));
+    const valorPago = arredondar(transaction_amount);
 
-    if (!valorEsperado) {
+    if (!valorBase) {
       console.error(`[Webhook] Tipo de receita inválido ou ausente: ${tipoReceita}`);
       return;
     }
 
-    const valorPago = arredondar(transaction_amount);
-    if (valorPago !== arredondar(valorEsperado)) {
+    if (valorPago !== valorEsperado) {
       console.error(`[Webhook] Valor pago (${valorPago}) difere do esperado (${valorEsperado}) para "${tipoReceita}"`);
       return;
     }
 
-    console.log(`[Webhook] Valor validado com sucesso: R$ ${valorPago} (${tipoReceita})`);
+    console.log(`[Webhook] Pagamento validado. Valor: R$ ${valorPago} | Plano: ${tipoReceita} | Comandos básicos: ${incluiComandosBasicos}`);
 
     const petNome = metadata.petNome || metadata.pet_nome;
     const formDataEncoded = metadata.formData || metadata.form_data;
@@ -86,7 +87,7 @@ export async function processarWebhookPagamento(paymentData) {
     if (!email) camposFaltando.push('email');
 
     if (camposFaltando.length) {
-      console.error(`[Webhook] Campos ausentes no metadata: ${camposFaltando.join(', ')}`);
+      console.error(`[Webhook] Campos faltando: ${camposFaltando.join(', ')}`);
       return;
     }
 
@@ -98,29 +99,18 @@ export async function processarWebhookPagamento(paymentData) {
       return;
     }
 
-    console.log('[Webhook] Dados do pet recebidos com sucesso:', dadosPet);
+    // 🔥 Insere flag de bump no input da IA
+    dadosPet.incluiComandosBasicos = incluiComandosBasicos;
 
-    // 🔥 Gerar receita com IA
+    // 🎯 Geração via IA
     const receita = await gerarTextoReceita(dadosPet);
-    console.log('[Webhook] Receita gerada com IA.');
+    console.log('[Webhook] Receita gerada.');
 
     const html = gerarHTMLReceita(petNome, receita);
+    const pdfBuffer = await gerarPDF(petNome, html);
 
-    let pdfBuffer;
-    try {
-      pdfBuffer = await gerarPDF(petNome, html);
-      console.log('[Webhook] PDF gerado com sucesso.');
-    } catch (err) {
-      console.error('[Webhook] Erro ao gerar PDF:', err);
-      return;
-    }
-
-    try {
-      await enviarEmailComPDF(email, petNome, pdfBuffer);
-      console.log(`[Webhook] E-mail enviado com sucesso para ${email}`);
-    } catch (err) {
-      console.error(`[Webhook] Falha ao enviar e-mail para ${email}:`, err);
-    }
+    await enviarEmailComPDF(email, petNome, pdfBuffer);
+    console.log(`[Webhook] E-mail com PDF enviado para ${email}`);
 
     console.log(`[Webhook] Processo finalizado com sucesso para pagamento ${id}`);
   } catch (err) {

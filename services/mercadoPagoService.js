@@ -8,19 +8,50 @@ const client = new MercadoPagoConfig({
 const payment = new Payment(client);
 const merchantOrder = new MerchantOrder(client);
 
-// ✅ Função principal de criação de pagamento PIX
-export async function criarPagamento({ email, nome, sobrenome = '', petNome, formData, valor, tipoReceita }) {
+export async function criarPagamento({
+  email,
+  nome,
+  sobrenome = '',
+  petNome,
+  formData,
+  valor,
+  tipoReceita,
+  incluiComandosBasicos = false 
+}) {
   if (!email || !nome || !petNome || !formData || !valor || !tipoReceita) {
     throw new Error('Dados insuficientes para criar pagamento');
   }
 
   const metadata = {
     petNome,
-    formData: Buffer.from(JSON.stringify(formData)).toString('base64'),
     email,
     valor,
-    tipoReceita
+    tipoReceita,
+    incluiComandosBasicos,
+    formData: Buffer.from(JSON.stringify(formData)).toString('base64')
   };
+
+  const items = [
+    {
+      id: 'nutricapet001',
+      title: `Nutrição Inteligente - ${petNome}`,
+      description: `Plano alimentar desenvolvido para ${petNome}`,
+      category_id: 'services',
+      quantity: 1,
+      unit_price: Number(valor) - (incluiComandosBasicos ? 7.9 : 0)
+    }
+  ];
+
+  if (incluiComandosBasicos) {
+    items.push({
+      id: 'comandosbasicos001',
+      title: 'Desafio: Comandos Básicos em 1 Semana',
+      description: 'Material bônus de treinamento canino',
+      category_id: 'services',
+      quantity: 1,
+      unit_price: 7.9
+    });
+  }
 
   const body = {
     transaction_amount: Number(valor),
@@ -33,16 +64,7 @@ export async function criarPagamento({ email, nome, sobrenome = '', petNome, for
     },
     metadata,
     additional_info: {
-      items: [
-        {
-          id: 'nutricapet001',
-          title: `Nutrição Inteligente - ${petNome}`,
-          description: `Plano alimentar desenvolvido para ${petNome}`,
-          category_id: 'services',
-          quantity: 1,
-          unit_price: Number(valor)
-        }
-      ],
+      items,
       payer: {
         first_name: nome,
         last_name: sobrenome
@@ -75,9 +97,7 @@ export async function criarPagamento({ email, nome, sobrenome = '', petNome, for
   }
 }
 
-// ✅ NOVAS FUNÇÕES USADAS PELO WEBHOOK
 
-// Busca direta pelo ID do pagamento
 export async function buscarPagamento(paymentId) {
   try {
     const result = await payment.get({ id: paymentId });
@@ -88,7 +108,6 @@ export async function buscarPagamento(paymentId) {
   }
 }
 
-// Busca via Merchant Order caso a direta falhe
 export async function buscarViaMerchantOrder(paymentId) {
   try {
     const result = await merchantOrder.search({ qs: { external_reference: paymentId } });
