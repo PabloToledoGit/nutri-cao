@@ -23,7 +23,6 @@ export async function processarWebhookPagamento(paymentData) {
       return;
     }
 
-    // Tentativas de busca
     let pagamento = null;
     const tentativas = 5;
     for (let i = 0; i < tentativas; i++) {
@@ -46,7 +45,7 @@ export async function processarWebhookPagamento(paymentData) {
       return;
     }
 
-    const { id, status, metadata = {}, transaction_amount, payer = {} } = pagamento;
+    const { id, status, metadata = {}, transaction_amount, payer = {}, additional_info = {} } = pagamento;
 
     if ((status || '').toLowerCase() !== 'approved') {
       console.log(`[Webhook] Pagamento ${id} com status "${status}". Ignorado.`);
@@ -56,23 +55,13 @@ export async function processarWebhookPagamento(paymentData) {
     const tipoReceita = metadata.tipoReceita || metadata.tipo_receita;
     const incluiComandosBasicos = metadata.incluiComandosBasicos === true || metadata.incluiComandosBasicos === 'true';
 
-    const valoresBase = {
-      vitalidade: 18.9,
-      controlePeso: 9.99,
-      emagrecimento: 12.9,
-    };
-
-    const valorBase = valoresBase[tipoReceita];
-    if (valorBase === undefined) {
-      console.error(`[Webhook] Tipo de receita inválido ou ausente: ${tipoReceita}`);
-      return;
-    }
-
-    const valorEsperado = arredondar(valorBase + (incluiComandosBasicos ? 7.9 : 0));
+    // ✅ Nova verificação com base na soma dos itens
+    const itens = additional_info?.items || [];
     const valorPago = arredondar(transaction_amount);
+    const somaDosItens = arredondar(itens.reduce((acc, item) => acc + Number(item.unit_price || 0), 0));
 
-    if (valorPago !== valorEsperado) {
-      console.error(`[Webhook] Valor pago (${valorPago}) difere do esperado (${valorEsperado}) para "${tipoReceita}"`);
+    if (valorPago !== somaDosItens) {
+      console.error(`[Webhook] Valor pago (${valorPago}) difere da soma dos itens (${somaDosItens})`);
       return;
     }
 
@@ -100,10 +89,10 @@ export async function processarWebhookPagamento(paymentData) {
       return;
     }
 
-    // Adiciona info do bump ao input da IA
+    // 🔥 Injeta info do bump para IA usar
     dadosPet.incluiComandosBasicos = incluiComandosBasicos;
 
-    // Geração da receita com IA
+    // 💡 Geração da receita com IA
     const receita = await gerarTextoReceita(dadosPet);
     console.log('[Webhook] Receita gerada.');
 
