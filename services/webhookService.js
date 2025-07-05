@@ -23,7 +23,7 @@ export async function processarWebhookPagamento(paymentData) {
       return;
     }
 
-    // Tentativa com retries
+    // Tentativas de busca
     let pagamento = null;
     const tentativas = 5;
     for (let i = 0; i < tentativas; i++) {
@@ -47,6 +47,7 @@ export async function processarWebhookPagamento(paymentData) {
     }
 
     const { id, status, metadata = {}, transaction_amount, payer = {} } = pagamento;
+
     if ((status || '').toLowerCase() !== 'approved') {
       console.log(`[Webhook] Pagamento ${id} com status "${status}". Ignorado.`);
       return;
@@ -62,13 +63,13 @@ export async function processarWebhookPagamento(paymentData) {
     };
 
     const valorBase = valoresBase[tipoReceita];
-    const valorEsperado = arredondar(valorBase + (incluiComandosBasicos ? 7.9 : 0));
-    const valorPago = arredondar(transaction_amount);
-
-    if (!valorBase) {
+    if (valorBase === undefined) {
       console.error(`[Webhook] Tipo de receita inválido ou ausente: ${tipoReceita}`);
       return;
     }
+
+    const valorEsperado = arredondar(valorBase + (incluiComandosBasicos ? 7.9 : 0));
+    const valorPago = arredondar(transaction_amount);
 
     if (valorPago !== valorEsperado) {
       console.error(`[Webhook] Valor pago (${valorPago}) difere do esperado (${valorEsperado}) para "${tipoReceita}"`);
@@ -99,10 +100,10 @@ export async function processarWebhookPagamento(paymentData) {
       return;
     }
 
-    // 🔥 Insere flag de bump no input da IA
+    // Adiciona info do bump ao input da IA
     dadosPet.incluiComandosBasicos = incluiComandosBasicos;
 
-    // 🎯 Geração via IA
+    // Geração da receita com IA
     const receita = await gerarTextoReceita(dadosPet);
     console.log('[Webhook] Receita gerada.');
 
