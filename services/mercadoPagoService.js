@@ -16,7 +16,7 @@ export async function criarPagamento({
   formData,
   valor,
   tipoReceita,
-  incluiComandosBasicos = false 
+  incluiComandosBasicos = false
 }) {
   if (!email || !nome || !petNome || !formData || !valor || !tipoReceita) {
     throw new Error('Dados insuficientes para criar pagamento');
@@ -27,7 +27,7 @@ export async function criarPagamento({
     email,
     valor,
     tipoReceita,
-    incluiComandosBasicos,
+    incluiComandosBasicos: !!incluiComandosBasicos, // ✅ força valor booleano puro
     formData: Buffer.from(JSON.stringify(formData)).toString('base64')
   };
 
@@ -96,7 +96,6 @@ export async function criarPagamento({
     throw new Error(error.message || 'Erro ao criar pagamento no Mercado Pago');
   }
 }
-
 
 export async function buscarPagamento(paymentId) {
   try {
