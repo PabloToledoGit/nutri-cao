@@ -3,9 +3,61 @@ import { enviarEmailComPDF } from '../services/emailService.js';
 import { buscarPagamento, buscarViaMerchantOrder } from '../services/mercadoPagoService.js';
 import { gerarPDF } from './geraPDF.js';
 import { gerarHTMLReceita } from './gerarHTML.js';
+import crypto from 'crypto';
+import fetch from 'node-fetch';
 
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 const arredondar = (num) => Math.round(Number(num) * 100) / 100;
+
+function hashEmail(email) {
+  return crypto.createHash('sha256').update(email.trim().toLowerCase()).digest('hex');
+}
+
+async function enviarEventoConversaoMeta(email, valor) {
+  const pixelId = process.env.META_PIXEL_ID;
+  const accessToken = process.env.META_PIXEL_TOKEN;
+
+  if (!pixelId || !accessToken) {
+    console.error('[Meta Pixel] Pixel ID ou Token ausente.');
+    return;
+  }
+
+  const url = `https://graph.facebook.com/v19.0/${pixelId}/events`;
+
+  const payload = {
+    data: [
+      {
+        event_name: "Purchase",
+        event_time: Math.floor(Date.now() / 1000),
+        user_data: {
+          em: [hashEmail(email)]
+        },
+        custom_data: {
+          currency: "BRL",
+          value: valor
+        },
+        action_source: "website"
+      }
+    ]
+  };
+
+  try {
+    const res = await fetch(`${url}?access_token=${accessToken}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      console.error('[Meta Pixel] Erro ao enviar evento:', data.error);
+    } else {
+      console.log('[Meta Pixel] Evento de conversão enviado com sucesso.');
+    }
+  } catch (err) {
+    console.error('[Meta Pixel] Erro de rede:', err);
+  }
+}
 
 export async function processarWebhookPagamento(paymentData) {
   try {
@@ -55,7 +107,6 @@ export async function processarWebhookPagamento(paymentData) {
     const tipoReceita = metadata.tipoReceita || metadata.tipo_receita;
     const incluiComandosBasicos = metadata.incluiComandosBasicos === true || metadata.incluiComandosBasicos === 'true';
 
-    // ✅ Nova verificação com base na soma dos itens
     const itens = additional_info?.items || [];
     const valorPago = arredondar(transaction_amount);
     const somaDosItens = arredondar(itens.reduce((acc, item) => acc + Number(item.unit_price || 0), 0));
@@ -89,10 +140,8 @@ export async function processarWebhookPagamento(paymentData) {
       return;
     }
 
-    // 🔥 Injeta info do bump para IA usar
     dadosPet.incluiComandosBasicos = incluiComandosBasicos;
 
-    // 💡 Geração da receita com IA
     const receita = await gerarTextoReceita(dadosPet);
     console.log('[Webhook] Receita gerada.');
 
@@ -101,6 +150,9 @@ export async function processarWebhookPagamento(paymentData) {
 
     await enviarEmailComPDF(email, petNome, pdfBuffer);
     console.log(`[Webhook] E-mail com PDF enviado para ${email}`);
+
+    // 🎯 Envio do evento de conversão para o Meta Pixel
+    await enviarEventoConversaoMeta(email, valorPago);
 
     console.log(`[Webhook] Processo finalizado com sucesso para pagamento ${id}`);
   } catch (err) {
